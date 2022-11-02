@@ -37,7 +37,7 @@ const generateFilterFormula = (filter: FilterBy): string => {
  * Get an airtable information by its tableId
  * @param filter 
  */
-export const select = async (tableId: string, filter?: FilterBy) => {
+export const getTableInformation = async (tableId: string, filter?: FilterBy) => {
   const selectOptions: SelectOptions<FieldSet> = {
     view: "Grid view",
   }
