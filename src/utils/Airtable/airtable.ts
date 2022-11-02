@@ -1,30 +1,14 @@
-import airtable, { Collaborator, FieldSet, Records, SelectOptions } from 'airtable';
+import airtable, { FieldSet, Records, SelectOptions } from 'airtable';
+
+// Enums
+import { UserFields, Users, FilterBy } from '~/utils/Airtable/airtable.enum';
 
 // Access to the api
-const apiKey = 'key6BafcViiXwNiWx';
-const idDatabase = 'appjBBRdx4MjC3EcY';
-export const idTable = 'tblU7w4IfYBqGYTnz';
+const apiKey = process.env.AIRTABLE_API_KEY || 'key6BafcViiXwNiWx';
+const idDatabase = process.env.AIRTABLE_DATABASE_ID || 'appjBBRdx4MjC3EcY';
 
 // DB instance
-const base = new airtable({apiKey}).base(idDatabase);
-
-export const enum UserFields {
-  STATUS = 'Status',
-  NAME = 'Name',
-  NOTES = 'Notes',
-  ASSIGNEE = 'Assignee',
-}
-
-export type FilterBy = {
-  [key in UserFields]?: string;
-};
-
-interface Users extends FieldSet {
-  [UserFields.STATUS]: string;
-  [UserFields.NAME]: string;
-  [UserFields.NOTES]: string;
-  [UserFields.ASSIGNEE]: Collaborator;
-}
+const base = new airtable({ apiKey }).base(idDatabase);
 
 // IMPORTANTE: si el campo es de tipo colaborador, solo devolverá el nombre en el filterByFormula, por lo cual no 
 // se podrá acceder al email del campo por las restricciones de la fórmula.
@@ -37,9 +21,14 @@ interface Users extends FieldSet {
  */
 const generateFilterFormula = (filter: FilterBy): string => {
   const valuesToFilter = [];
-  for(const [key, value] of Object.entries(filter)){
-    if (value) valuesToFilter.push(`{${key}} = '${value}'`);
+
+  for (let [key, value] of Object.entries(filter)) {
+    const userFieldName = Object.entries(UserFields)
+                          .find(([userFieldsKey]) => userFieldsKey.toLowerCase() === key.toLowerCase());
+    if (!userFieldName) break;
+    if (value) valuesToFilter.push(`{${userFieldName[1]}} = '${value}'`);
   }
+
   if (valuesToFilter.length > 1) return `AND(${valuesToFilter.toString()})`;
   return `(${valuesToFilter.toString()})`;
 }
@@ -55,7 +44,7 @@ export const select = async (tableId: string, filter?: FilterBy) => {
 
   let filterFormula;
   if (filter) filterFormula = generateFilterFormula(filter);
-  if (filterFormula) selectOptions.filterByFormula = filterFormula
+  if (filterFormula) selectOptions.filterByFormula = filterFormula;
 
   base(tableId).select(selectOptions).eachPage(function page(records, fetchNextPage) {
     (records as unknown as Records<Users>).forEach(function(record) {

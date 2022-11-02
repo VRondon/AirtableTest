@@ -1,13 +1,13 @@
 import { InputType, Field } from 'type-graphql';
 
 // Utils
-import { UserFields } from '~/utils/airtable';
+import { UserFilterField, Status } from '~/utils/Airtable/airtable.enum';
 
 @InputType()
 export class SearchUsersInput {
   @Field({ nullable: true })
-  public [UserFields.NAME]?: string;
+  public company_email?: string;
 
-  @Field({ nullable: true })
-  public [UserFields.STATUS]?: string;
+  @Field(() => Status, { nullable: true })
+  public [UserFilterField.STATUS]?: Status;
 }
